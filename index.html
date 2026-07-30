@@ -8,38 +8,39 @@
 </head>
 <body>
   <div class="pl-app" id="playlistApp">
-    
-    <!-- HEADER -->
+
     <header class="pl-header">
       <div class="pl-logo">
-        <!-- REEMPLAZA "assets/logo.png" POR LA RUTA DE TU IMAGEN -->
         <img src="assets/logo.png" alt="Logo PlayList" class="pl-logo-img">
       </div>
       <h1>PlayList <span class="pl-header-sub">(Proyecto)</span></h1>
     </header>
 
-    <!-- MAIN: 3 paneles -->
     <main class="pl-main">
-      
-      <!-- Panel Izquierdo: Playlists -->
+
+      <!-- Sidebar: selector + lista de playlists -->
       <aside class="pl-panel pl-panel--sidebar">
         <div class="pl-panel-header">
-          <span>Playlists</span>
-          <button class="pl-btn-icon" onclick="app.newPlaylist()" title="Nueva playlist">
+          <span>Play List</span>
+          <button type="button" class="pl-btn-icon" data-action="new-playlist" title="Nueva playlist">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </button>
         </div>
+        <div class="pl-select-wrap">
+          <label for="playlistSelect">Activa</label>
+          <select id="playlistSelect" aria-label="Seleccionar playlist"></select>
+        </div>
         <div class="pl-list" id="playlistList"></div>
       </aside>
 
-      <!-- Panel Central: Canciones -->
+      <!-- Canciones de la playlist activa -->
       <section class="pl-panel pl-panel--main">
         <div class="pl-panel-header">
-          <span id="songsHeader">Canciones (PL)</span>
-          <button class="pl-btn-icon" onclick="app.addSong()" title="Agregar canción">
+          <span id="songsHeader">Canciones</span>
+          <button type="button" class="pl-btn-icon" data-action="add-songs" title="Agregar canciones">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
@@ -47,9 +48,10 @@
           </button>
         </div>
         <div class="pl-list" id="songList"></div>
+        <input type="file" id="addSongsInput" class="pl-file-hidden" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac" multiple>
       </section>
 
-      <!-- Panel Derecho: Formulario Crear/Editar -->
+      <!-- Crear playlist + input file -->
       <aside class="pl-panel pl-panel--form">
         <div class="pl-panel-header">
           <span id="formHeader">Crear Playlist</span>
@@ -57,30 +59,39 @@
         <div class="pl-form" id="playlistForm">
           <div class="pl-form-group">
             <label for="plName">Nombre</label>
-            <input type="text" id="plName" placeholder="Mi playlist...">
+            <input type="text" id="plName" placeholder="Mi playlist..." autocomplete="off">
           </div>
           <div class="pl-form-group">
             <label for="plDesc">Descripción</label>
-            <textarea id="plDesc" placeholder="Describe tu playlist..."></textarea>
+            <textarea id="plDesc" placeholder="Opcional..."></textarea>
+          </div>
+          <div class="pl-form-group">
+            <label>Canciones</label>
+            <div class="pl-draft-list" id="draftList"></div>
+            <button type="button" class="pl-btn-secondary pl-btn-block" data-action="pick-files">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              input file
+            </button>
+            <input type="file" id="fileInput" class="pl-file-hidden" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac" multiple>
           </div>
           <div class="pl-form-actions">
-            <button class="pl-btn-primary" onclick="app.savePlaylist()">
+            <button type="button" class="pl-btn-primary" data-action="save-playlist">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
               Guardar
             </button>
-            <button class="pl-btn-secondary" onclick="app.cancelEdit()">Cancelar</button>
+            <button type="button" class="pl-btn-secondary" data-action="cancel-edit">Cancelar</button>
           </div>
         </div>
       </aside>
 
     </main>
 
-    <!-- BARRA DE REPRODUCCIÓN -->
     <footer class="pl-player">
-      
-      <!-- Carátula / Icono -->
       <div class="pl-player-art" id="playerArt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M9 18V5l12-2v13"/>
@@ -89,15 +100,13 @@
         </svg>
       </div>
 
-      <!-- Info de la canción -->
       <div class="pl-player-info">
         <div class="pl-player-title" id="playerTitle">Selecciona una canción</div>
         <div class="pl-player-artist" id="playerArtist">—</div>
       </div>
 
-      <!-- Barra de progreso -->
       <div class="pl-player-progress">
-        <div class="pl-progress-bar" onclick="app.seek(event)">
+        <div class="pl-progress-bar">
           <div class="pl-progress-fill" id="progressFill"></div>
         </div>
         <div class="pl-progress-time">
@@ -106,11 +115,8 @@
         </div>
       </div>
 
-      <!-- Controles -->
       <div class="pl-player-controls">
-        
-        <!-- Shuffle -->
-        <button class="pl-control-btn" id="btnShuffle" onclick="app.toggleShuffle()" title="Aleatorio">
+        <button type="button" class="pl-control-btn" id="btnShuffle" data-action="toggle-shuffle" title="Aleatorio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polyline points="16 3 21 3 21 8"/>
             <line x1="4" y1="20" x2="21" y2="3"/>
@@ -120,35 +126,37 @@
           </svg>
         </button>
 
-        <!-- Prev -->
-        <button class="pl-control-btn" onclick="app.prev()" title="Anterior">
+        <button type="button" class="pl-control-btn" data-action="prev" title="Anterior">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polygon points="19 20 9 12 19 4 19 20"/>
             <line x1="5" y1="19" x2="5" y2="5"/>
           </svg>
         </button>
 
-        <!-- Play / Pause -->
-        <button class="pl-control-btn pl-play" id="btnPlay" onclick="app.togglePlay()">
-          <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor">
+        <button type="button" class="pl-control-btn" data-action="stop" title="Detener">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12"/>
+          </svg>
+        </button>
+
+        <button type="button" class="pl-control-btn pl-play" id="btnPlay" data-action="toggle-play" title="Reproducir / Pausar">
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-          <svg id="iconPause" viewBox="0 0 24 24" fill="currentColor">
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="4" width="4" height="16"/>
             <rect x="14" y="4" width="4" height="16"/>
           </svg>
         </button>
 
-        <!-- Next -->
-        <button class="pl-control-btn" onclick="app.next()" title="Siguiente">
+        <button type="button" class="pl-control-btn" data-action="next" title="Siguiente">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polygon points="5 4 15 12 5 20 5 4"/>
             <line x1="19" y1="5" x2="19" y2="19"/>
           </svg>
         </button>
 
-        <!-- Repeat -->
-        <button class="pl-control-btn" id="btnRepeat" onclick="app.toggleRepeat()" title="Repetir">
+        <button type="button" class="pl-control-btn" id="btnRepeat" data-action="toggle-loop" title="Repetir">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polyline points="17 1 21 5 17 9"/>
             <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
@@ -156,12 +164,14 @@
             <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
           </svg>
         </button>
-
       </div>
     </footer>
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="js/idb.js"></script>
+  <script src="js/playlist.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
