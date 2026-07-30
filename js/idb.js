@@ -1,5 +1,5 @@
-/* IndexedDB: abrir la base, insertar, buscar, actualizar y borrar registros.
-   Tambien guarda el historial de acciones realizadas. */
+/* IndexedDB: abre la base, inserta, busca, actualiza y borra registros.
+   Tambien guarda el historial de acciones. */
 (function (global) {
   'use strict';
 
@@ -67,7 +67,7 @@
       };
 
       tx.onabort = function (event) {
-        fail(event.target.error || new Error('Transacción abortada'));
+        fail(event.target.error || new Error('Transaction aborted'));
       };
     });
   }
@@ -83,8 +83,7 @@
     }
 
     return {
-      
-      insertar: function (storeName, data) {
+      insert: function (storeName, data) {
         return getDB().then(function (db) {
           return runStore(db, storeName, 'readwrite', function (store) {
             return store.put(data);
@@ -92,8 +91,7 @@
         });
       },
 
-      
-      buscar: function (storeName, query) {
+      find: function (storeName, query) {
         query = query || {};
         return getDB().then(function (db) {
           return runStore(db, storeName, 'readonly', function (store) {
@@ -108,13 +106,11 @@
         });
       },
 
-      
-      actualizar: function (storeName, data) {
-        return this.insertar(storeName, data);
+      update: function (storeName, data) {
+        return this.insert(storeName, data);
       },
 
-      
-      borrar: function (storeName, query) {
+      remove: function (storeName, query) {
         return getDB().then(function (db) {
           return runStore(db, storeName, 'readwrite', function (store) {
             return store.delete(query.key);
@@ -122,8 +118,7 @@
         });
       },
 
-      
-      contar: function (storeName) {
+      count: function (storeName) {
         return getDB().then(function (db) {
           return runStore(db, storeName, 'readonly', function (store) {
             return store.count();
@@ -131,8 +126,7 @@
         });
       },
 
-      
-      limpiar: function (storeName) {
+      clear: function (storeName) {
         return getDB().then(function (db) {
           return runStore(db, storeName, 'readwrite', function (store) {
             return store.clear();
@@ -142,32 +136,32 @@
     };
   }
 
-  function createHistorial(db, storeName) {
-    storeName = storeName || 'historial';
+  function createHistory(db, storeName) {
+    storeName = storeName || 'history';
 
-    function registrar(accion, detalle) {
+    function record(action, detail) {
       var entry = {
         id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        accion: accion,
-        detalle: detalle || {},
-        fecha: new Date().toISOString()
+        action: action,
+        detail: detail || {},
+        date: new Date().toISOString()
       };
-      return db.insertar(storeName, entry).then(function () {
+      return db.insert(storeName, entry).then(function () {
         return entry;
       });
     }
 
-    function listar() {
-      return db.buscar(storeName, {}).then(function (rows) {
+    function list() {
+      return db.find(storeName, {}).then(function (rows) {
         return (rows || []).slice().sort(function (a, b) {
-          return String(a.fecha).localeCompare(String(b.fecha));
+          return String(a.date).localeCompare(String(b.date));
         });
       });
     }
 
-    return { registrar: registrar, listar: listar };
+    return { record: record, list: list };
   }
 
   global.IDB = { create: createIDB, open: openDB };
-  global.Historial = { create: createHistorial };
+  global.History = { create: createHistory };
 })(window);

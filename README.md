@@ -58,7 +58,7 @@ En movil, el area central (`.pl-main`) hace scroll para que se vea el formulario
 
 ## js/idb.js
 
-Se encarga de IndexedDB. Expone dos objetos globales: `IDB` e `Historial`.
+Se encarga de IndexedDB. Expone dos objetos globales: `IDB` e `History`.
 
 ### Funciones internas
 
@@ -70,24 +70,24 @@ Se encarga de IndexedDB. Expone dos objetos globales: `IDB` e `Historial`.
 
 | Metodo | Que hace |
 |--------|----------|
-| `insertar(storeName, data)` | Guarda o reemplaza un registro con `store.put` |
-| `buscar(storeName, query)` | Si `query.key` existe, busca por llave. Si hay `index` y `value`, busca por indice. Si no, trae todos con `getAll` |
-| `actualizar(storeName, data)` | Llama a `insertar` (mismo `put`) |
-| `borrar(storeName, query)` | Elimina el registro con esa `key` |
-| `contar(storeName)` | Cuenta cuantos registros hay |
-| `limpiar(storeName)` | Vacia el almacen |
+| `insert(storeName, data)` | Guarda o reemplaza un registro con `store.put` |
+| `find(storeName, query)` | Si `query.key` existe, busca por llave. Si hay `index` y `value`, busca por indice. Si no, trae todos con `getAll` |
+| `update(storeName, data)` | Llama a `insert` (mismo `put`) |
+| `remove(storeName, query)` | Elimina el registro con esa `key` |
+| `count(storeName)` | Cuenta cuantos registros hay |
+| `clear(storeName)` | Vacia el almacen |
 
-### Historial (`Historial.create(db, storeName)`)
+### History (`History.create(db, storeName)`)
 
-- `registrar(accion, detalle)`: crea un registro con id, nombre de la accion, detalle y fecha, y lo guarda en el almacen `historial`.
-- `listar()`: devuelve todos los registros del historial ordenados por fecha.
+- `record(action, detail)`: crea un registro con id, nombre de la accion, detalle y fecha, y lo guarda en el almacen `history`.
+- `list()`: devuelve todos los registros del historial ordenados por fecha.
 
 Ejemplo de uso desde fuera:
 
 ```js
-var db = IDB.create({ name: 'PlayListDB', version: 1, onUpgrade: ... });
-db.insertar('playlists', { id: '1', name: 'Rock' });
-db.buscar('playlists', { key: '1' });
+var db = IDB.create({ name: 'PlayListDB', version: 2, onUpgrade: ... });
+db.insert('playlists', { id: '1', name: 'Rock' });
+db.find('playlists', { key: '1' });
 ```
 
 ---
@@ -98,12 +98,12 @@ Maneja la logica de playlists y canciones. Usa el cliente de `idb.js`. Expone `P
 
 ### Constantes y helpers
 
-- `STORES`: nombres de los almacenes (`playlists`, `songs`, `historial`).
+- `STORES`: nombres de los almacenes (`playlists`, `songs`, `history`).
 - `uid(prefix)`: genera un id unico (por ejemplo `pl-1732...` o `song-1732...`).
 - `setupSchema(db)`: crea los tres object stores la primera vez que se abre la base. En `songs` ademas crea un indice `playlistId`.
-- `log(accion, detalle)`: llama a `historial.registrar` cuando hay historial disponible.
+- `log(action, detail)`: llama a `history.record` cuando hay historial disponible.
 
-### Metodos del servicio (`PlaylistService.create(db, historial)`)
+### Metodos del servicio (`PlaylistService.create(db, history)`)
 
 | Metodo | Que hace |
 |--------|----------|
@@ -207,7 +207,7 @@ state = {
 Al iniciar se crea:
 
 - `db` con `IDB.create` y el esquema de `PlaylistService.setupSchema`
-- `historial` con `Historial.create`
+- `history` con `History.create`
 - `service` con `PlaylistService.create`
 - `player` con `Player.create`
 - `ui` con `createUI('#playlistApp', { ...handlers })`
@@ -224,11 +224,11 @@ Al iniciar se crea:
 | `deletePlaylist(id)` | Pide confirmacion, borra en la base y refresca. Si era la activa, detiene el audio |
 | `addFilesToActive(files)` | Agrega archivos a la playlist activa (boton + de Canciones) |
 | `deleteSong(songId)` | Quita una cancion; si era la que sonaba, detiene el audio |
-| `playSong(songId, index)` | Pone la cola, reproduce esa pista y registra `reproducir` en el historial |
+| `playSong(songId, index)` | Pone la cola, reproduce esa pista y registra `play` en el historial |
 
 Al final, `app.js` escucha eventos del player (`track`, `state`, `time`, `mode`) para mantener la barra inferior y la lista sincronizadas. Llama a `refreshPlaylists()` al cargar la pagina.
 
-Para depurar en consola queda disponible `window.PlayListApp` (`state`, `service`, `historial`, `player`, `refresh`).
+Para depurar en consola queda disponible `window.PlayListApp` (`state`, `service`, `history`, `player`, `refresh`).
 
 ---
 
@@ -247,6 +247,6 @@ Para depurar en consola queda disponible `window.PlayListApp` (`state`, `service
 |---------|-----------|
 | `playlists` | id, name, description, songIds, createdAt |
 | `songs` | id, name, type, size, blob, playlistId, addedAt |
-| `historial` | id, accion, detalle, fecha |
+| `history` | id, action, detail, date |
 
 Si borras los datos del sitio en el navegador, se pierden playlists y archivos guardados.

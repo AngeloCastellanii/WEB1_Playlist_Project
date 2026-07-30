@@ -354,14 +354,14 @@
 
   var db = IDB.create({
     name: 'PlayListDB',
-    version: 1,
+    version: 2,
     onUpgrade: function (database) {
       PlaylistService.setupSchema(database);
     }
   });
 
-  var historial = Historial.create(db, PlaylistService.stores.historial);
-  var service = PlaylistService.create(db, historial);
+  var history = History.create(db, PlaylistService.stores.history);
+  var service = PlaylistService.create(db, history);
   var player = Player.create();
 
   function activePlaylist() {
@@ -482,7 +482,7 @@
       var pl = activePlaylist();
       ui.setPlayerTrack(song, pl ? pl.name : '');
       ui.renderSongs(state.songs, pl ? pl.name : '', state.playingSongId);
-      historial.registrar('reproducir', { songId: song.id, name: song.name });
+      history.record('play', { songId: song.id, name: song.name });
     }).catch(function () {
       window.alert('No se pudo reproducir el archivo');
     });
@@ -540,7 +540,7 @@
   window.PlayListApp = {
     state: state,
     service: service,
-    historial: historial,
+    history: history,
     player: player,
     refresh: refreshPlaylists
   };

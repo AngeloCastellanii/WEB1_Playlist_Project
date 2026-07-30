@@ -6,21 +6,21 @@
   var STORES = {
     playlists: 'playlists',
     songs: 'songs',
-    historial: 'historial'
+    history: 'history'
   };
 
   function uid(prefix) {
     return (prefix || 'id') + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
   }
 
-  function createPlaylistService(db, historial) {
-    function log(accion, detalle) {
-      if (!historial) return Promise.resolve();
-      return historial.registrar(accion, detalle);
+  function createPlaylistService(db, history) {
+    function log(action, detail) {
+      if (!history) return Promise.resolve();
+      return history.record(action, detail);
     }
 
     function listPlaylists() {
-      return db.buscar(STORES.playlists, {}).then(function (rows) {
+      return db.find(STORES.playlists, {}).then(function (rows) {
         return (rows || []).slice().sort(function (a, b) {
           return String(a.name || '').localeCompare(String(b.name || ''));
         });
@@ -28,7 +28,7 @@
     }
 
     function getPlaylist(id) {
-      return db.buscar(STORES.playlists, { key: id });
+      return db.find(STORES.playlists, { key: id });
     }
 
     function createPlaylist(data) {
@@ -40,18 +40,18 @@
         createdAt: new Date().toISOString()
       };
       if (!playlist.name) {
-        return Promise.reject(new Error('El nombre de la playlist es obligatorio'));
+        return Promise.reject(new Error('Playlist name is required'));
       }
-      return db.insertar(STORES.playlists, playlist).then(function () {
-        return log('crear_playlist', { id: playlist.id, name: playlist.name });
+      return db.insert(STORES.playlists, playlist).then(function () {
+        return log('create_playlist', { id: playlist.id, name: playlist.name });
       }).then(function () {
         return playlist;
       });
     }
 
     function updatePlaylist(playlist) {
-      return db.actualizar(STORES.playlists, playlist).then(function () {
-        return log('actualizar_playlist', { id: playlist.id, name: playlist.name });
+      return db.update(STORES.playlists, playlist).then(function () {
+        return log('update_playlist', { id: playlist.id, name: playlist.name });
       }).then(function () {
         return playlist;
       });
@@ -62,11 +62,11 @@
         if (!playlist) return null;
         var songIds = playlist.songIds || [];
         return Promise.all(songIds.map(function (sid) {
-          return db.borrar(STORES.songs, { key: sid });
+          return db.remove(STORES.songs, { key: sid });
         })).then(function () {
-          return db.borrar(STORES.playlists, { key: id });
+          return db.remove(STORES.playlists, { key: id });
         }).then(function () {
-          return log('borrar_playlist', { id: id, name: playlist.name });
+          return log('delete_playlist', { id: id, name: playlist.name });
         }).then(function () {
           return playlist;
         });
@@ -78,7 +78,7 @@
         if (!playlist) return [];
         var ids = playlist.songIds || [];
         return Promise.all(ids.map(function (id) {
-          return db.buscar(STORES.songs, { key: id });
+          return db.find(STORES.songs, { key: id });
         })).then(function (songs) {
           return songs.filter(Boolean);
         });
@@ -90,7 +90,7 @@
       if (!list.length) return Promise.resolve([]);
 
       return getPlaylist(playlistId).then(function (playlist) {
-        if (!playlist) return Promise.reject(new Error('Playlist no encontrada'));
+        if (!playlist) return Promise.reject(new Error('Playlist not found'));
 
         var created = [];
         var chain = Promise.resolve();
@@ -99,18 +99,18 @@
           chain = chain.then(function () {
             var song = {
               id: uid('song'),
-              name: file.name || 'Sin nombre',
+              name: file.name || 'Untitled',
               type: file.type || 'audio/mpeg',
               size: file.size || 0,
               blob: file,
               playlistId: playlistId,
               addedAt: new Date().toISOString()
             };
-            return db.insertar(STORES.songs, song).then(function () {
+            return db.insert(STORES.songs, song).then(function () {
               playlist.songIds = playlist.songIds || [];
               playlist.songIds.push(song.id);
               created.push(song);
-              return log('insertar_cancion', {
+              return log('insert_song', {
                 id: song.id,
                 name: song.name,
                 playlistId: playlistId
@@ -133,16 +133,16 @@
         playlist.songIds = (playlist.songIds || []).filter(function (id) {
           return id !== songId;
         });
-        return db.borrar(STORES.songs, { key: songId }).then(function () {
+        return db.remove(STORES.songs, { key: songId }).then(function () {
           return updatePlaylist(playlist);
         }).then(function () {
-          return log('borrar_cancion', { id: songId, playlistId: playlistId });
+          return log('delete_song', { id: songId, playlistId: playlistId });
         });
       });
     }
 
     function getSong(id) {
-      return db.buscar(STORES.songs, { key: id });
+      return db.find(STORES.songs, { key: id });
     }
 
     return {
@@ -167,8 +167,8 @@
       var songs = db.createObjectStore(STORES.songs, { keyPath: 'id' });
       songs.createIndex('playlistId', 'playlistId', { unique: false });
     }
-    if (!db.objectStoreNames.contains(STORES.historial)) {
-      db.createObjectStore(STORES.historial, { keyPath: 'id' });
+    if (!db.objectStoreNames.contains(STORES.history)) {
+      db.createObjectStore(STORES.history, { keyPath: 'id' });
     }
   }
 

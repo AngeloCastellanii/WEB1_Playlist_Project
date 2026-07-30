@@ -1,4 +1,4 @@
-/* Reproductor de audio: play, pause, stop, anterior, siguiente,
+/* Reproductor: play, pause, stop, anterior, siguiente,
    repetir, aleatorio y barra de progreso. */
 (function (global) {
   'use strict';
